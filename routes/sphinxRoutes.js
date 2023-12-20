@@ -7,8 +7,9 @@ const {
 } = require("../controllers/sphinxController");
 const { sphinxSchema } = require("../validations/sphinxValidation");
 const { validate } = require("../utils/validateInput");
+const { authenticateToken } = require("../middlewares/authorization")
 
-router.route("/all").get(getAllSphinx);
+router.get("/all", authenticateToken, getAllSphinx);
 router.route("/create").post(validate(sphinxSchema), createSphinx);
 router.route("/update-likes").put(updateSphinxLikes);
 

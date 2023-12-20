@@ -6,14 +6,13 @@ exports.authenticateToken = (req, res, next) => {
     res.json({ error: "Missing JWT token from the 'Authorization' header" });
     return;
   } else {
-    const token = req.headers["authorization"];
+    const token = req.headers["authorization"].split(" ")[1];
     jwt.verify(token, process.env.TOKEN_KEY, (err, user) => {
       if (err) {
         res.statusCode = 403;
         res.json({ error: "Wrong JWT token" });
         return;
       }
-      req.user = user;
       next();
     });
   }
