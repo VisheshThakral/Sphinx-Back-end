@@ -3,11 +3,12 @@ const jwt = require("jsonwebtoken");
 module.exports = {
   signAccessToken: (userId) => {
     return new Promise((resolve, reject) => {
-      const payload = {};
+      const payload = {
+        id: userId
+      };
       const secret = process.env.TOKEN_KEY;
       const options = {
-        expiresIn: "5m",
-        audience: userId,
+        expiresIn: "1h",
       };
       jwt.sign(payload, secret, options, (err, token) => {
         if (err) reject(err);

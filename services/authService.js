@@ -25,9 +25,7 @@ const loginUser = async (req, res) => {
   if (!isMatch) {
     return res.send("Password is incorrect");
   }
-
   const accessToken = await signAccessToken(user._id.toString());
-  // const refreshToken = await signRefreshToken(user._id.toString());
   res
     .header("Authorization", "Bearer " + accessToken)
     .json({ msg: "Login Successfully" });
