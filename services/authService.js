@@ -23,12 +23,12 @@ const loginUser = async (req, res) => {
 
   const isMatch = await user.isValidPassword(password);
   if (!isMatch) {
-    return res.send("Password is incorrect");
+    return res.status(401).send("Password is incorrect");
   }
   const accessToken = await signAccessToken(user._id.toString());
   res
     .header("Authorization", "Bearer " + accessToken)
-    .json({ msg: "Login Successfully" });
+    .json({ userId: user._id, msg: "Login Successfully" });
 };
 
 module.exports = {
