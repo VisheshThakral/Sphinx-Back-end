@@ -1,6 +1,6 @@
 const User = require("../models/User");
 const asyncWrapper = require("../utils/async");
-const { createAccessToken } = require("../utils/jwt_helper");
+const { createAccessToken } = require("../helpers/jwt_helper");
 
 const registerUser = asyncWrapper(async (req, res) => {
   const value = req.body;

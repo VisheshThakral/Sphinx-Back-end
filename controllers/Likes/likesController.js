@@ -2,7 +2,7 @@ const asyncWrapper = require("../../utils/async");
 const Sphinx = require("../../models/Sphinx");
 const Like = require("../../models/Likes");
 const User = require("../../models/User");
-const { getUserId } = require("../../utils/jwt_helper");
+const { getUserId } = require("../../helpers/jwt_helper");
 
 const updateSphinxLikes = asyncWrapper(async (req, res) => {
   // Extract user ID from the authorization token
