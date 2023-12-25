@@ -1,6 +1,6 @@
 const User = require("../models/User");
 const asyncWrapper = require("../utils/async");
-const { signAccessToken } = require("../utils/jwt_helper");
+const { createAccessToken } = require("../utils/jwt_helper");
 
 const registerUser = asyncWrapper(async (req, res) => {
   const value = req.body;
@@ -25,10 +25,16 @@ const loginUser = async (req, res) => {
   if (!isMatch) {
     return res.status(401).send("Password is incorrect");
   }
-  const accessToken = await signAccessToken(user._id.toString());
-  res
-    .header("Authorization", "Bearer " + accessToken)
-    .json({ userId: user._id, msg: "Login Successfully" });
+  const accessToken = await createAccessToken(user._id.toString());
+  const { _id, __v, password: Password, ...userData } = user.toObject();
+
+  res.header("Authorization", "Bearer " + accessToken).json({
+    msg: "Login Successfully",
+    data: {
+      userId: user._id,
+      ...userData,
+    },
+  });
 };
 
 module.exports = {

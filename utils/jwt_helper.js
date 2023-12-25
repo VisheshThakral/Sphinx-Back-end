@@ -1,10 +1,14 @@
 const jwt = require("jsonwebtoken");
 
 module.exports = {
-  signAccessToken: (userId) => {
+  getUserId(token) {
+    const payload = JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
+    return payload.id;
+  },
+  createAccessToken: (userId) => {
     return new Promise((resolve, reject) => {
       const payload = {
-        id: userId
+        id: userId,
       };
       const secret = process.env.TOKEN_KEY;
       const options = {
@@ -16,7 +20,7 @@ module.exports = {
       });
     });
   },
-  signRefreshToken: (userId) => {
+  createRefreshToken: (userId) => {
     return new Promise((resolve, reject) => {
       const payload = {};
       const secret = process.env.REFRESH_TOKEN_SECRET;
