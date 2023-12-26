@@ -1,19 +1,22 @@
 const asyncWrapper = require("../../utils/async");
+const { getUserId } = require("../../helpers/jwt_helper");
 const {
   getPaginationParams,
   calculateSkip,
   calculatePaginationInfo,
 } = require("../../helpers/paginationHelper");
 const {
-  getSphinxListWithLikes,
+  getSphinxes,
   getTotalSphinxCount,
 } = require("../../services/sphinxService");
 
 const getSphinxList = asyncWrapper(async (req, res) => {
+  const token = req.headers["authorization"].split(" ")[1];
+  const userId = getUserId(token);
   const { pageNumber, limitNumber } = getPaginationParams(req);
   const skip = calculateSkip(pageNumber, limitNumber);
 
-  const sphinxList = await getSphinxListWithLikes(skip, limitNumber);
+  const sphinxList = await getSphinxes(skip, limitNumber, userId);
 
   const totalSphinx = await getTotalSphinxCount();
   const paginationInfo = calculatePaginationInfo(
