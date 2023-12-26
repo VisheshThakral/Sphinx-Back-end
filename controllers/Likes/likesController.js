@@ -4,7 +4,7 @@ const Like = require("../../models/Likes");
 const User = require("../../models/User");
 const { getUserId } = require("../../helpers/jwt_helper");
 
-const updateSphinxLikes = asyncWrapper(async (req, res) => {
+const likeSphinx = asyncWrapper(async (req, res) => {
   // Extract user ID from the authorization token
   const token = req.headers["authorization"].split(" ")[1];
   const userId = getUserId(token);
@@ -32,6 +32,21 @@ const updateSphinxLikes = asyncWrapper(async (req, res) => {
   res.status(201).json(newLike);
 });
 
+const dislikeSphinx = asyncWrapper(async (req, res) => {
+  // Extract user ID from the authorization token
+  const token = req.headers["authorization"].split(" ")[1];
+  const userId = getUserId(token);
+  const sphinxId= req.params.sphinxId;
+
+  const like = await Like.findOneAndDelete({ userId, sphinxId });
+  if (like) {
+    res.status(200).json({ message: "Like deleted successfully" });
+  } else {
+    res.status(404).json({ message: "Like not found" });
+  }
+});
+
 module.exports = {
-  updateSphinxLikes,
+  likeSphinx,
+  dislikeSphinx,
 };
