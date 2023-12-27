@@ -1,6 +1,10 @@
 const Sphinx = require("../models/Sphinx");
 const mongoose = require("mongoose");
 
+const isUserInteraction = (array, field, value) => ({
+  $in: [new mongoose.Types.ObjectId(value), "$" + array + "." + field],
+});
+
 const getSphinxes = async (skip, limitNumber, userId) => {
   return await Sphinx.aggregate([
     {
@@ -12,38 +16,29 @@ const getSphinxes = async (skip, limitNumber, userId) => {
       },
     },
     {
+      $lookup: {
+        from: "reposts",
+        localField: "_id",
+        foreignField: "sphinxId",
+        as: "reposts",
+      },
+    },
+    {
       $addFields: {
-        likesCount: { $size: '$likes' },
-        isLikedByUser: {
-          $cond: {
-            if: {
-              $gt: [
-                {
-                  $size: {
-                    $filter: {
-                      input: "$likes",
-                      as: "like",
-                      cond: {
-                        $eq: ["$$like.userId", new mongoose.Types.ObjectId(userId)],
-                      },
-                    },
-                  },
-                },
-                0,
-              ],
-            },
-            then: true,
-            else: false,
-          },
-        },
+        likes: { $size: "$likes" },
+        reposts: { $size: "$reposts" },
+        isLikedByUser: isUserInteraction("likes", "userId", userId),
+        isRepostedByUser: isUserInteraction("reposts", "userId", userId),
       },
     },
     {
       $project: {
         sphinxId: { $toString: "$_id" },
         content: 1,
-        likes: { $toInt: { $size: "$likes" } },
+        likes: 1,
+        reposts: 1,
         isLikedByUser: 1,
+        isRepostedByUser: 1,
       },
     },
     {
