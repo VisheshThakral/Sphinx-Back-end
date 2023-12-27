@@ -1,10 +1,10 @@
 const asyncWrapper = require("../../utils/async");
 const Sphinx = require("../../models/Sphinx");
-const Like = require("../../models/Likes");
+const Repost = require("../../models/Reposts");
 const User = require("../../models/User");
 const { getUserId } = require("../../helpers/jwt_helper");
 
-const likeSphinx = asyncWrapper(async (req, res) => {
+const repostSphinx = asyncWrapper(async (req, res) => {
   // Extract user ID from the authorization token
   const token = req.headers["authorization"].split(" ")[1];
   const userId = getUserId(token);
@@ -21,32 +21,34 @@ const likeSphinx = asyncWrapper(async (req, res) => {
     return res.status(404).json({ error: "Sphinx or user not found." });
   }
 
-  // Check if the user has already liked the Sphinx
-  const existingLike = await Like.findOne({ userId, sphinxId });
-  if (existingLike) {
-    return res.status(400).json({ error: "User has already liked the Sphinx." });
+  // Check if the user has already reposted the tweet
+  const existingRepost = await Repost.findOne({ userId, sphinxId });
+  if (existingRepost) {
+    return res
+      .status(400)
+      .json({ error: "User has already reposted the tweet." });
   }
 
-  // Create a new like and return it in the response
-  const newLike = await Like.create({ sphinxId, userId });
-  res.status(201).json(newLike);
+  // Create a new repost and return it in the response
+  const newRepost = await Repost.create({ sphinxId, userId });
+  res.status(201).json(newRepost);
 });
 
-const dislikeSphinx = asyncWrapper(async (req, res) => {
+const undoRepostSphinx = asyncWrapper(async (req, res) => {
   // Extract user ID from the authorization token
   const token = req.headers["authorization"].split(" ")[1];
   const userId = getUserId(token);
-  const sphinxId= req.params.sphinxId;
+  const sphinxId = req.params.sphinxId;
 
-  const like = await Like.findOneAndDelete({ userId, sphinxId });
-  if (like) {
-    res.status(200).json({ message: "Like deleted successfully" });
+  const repost = await Repost.findOneAndDelete({ userId, sphinxId });
+  if (repost) {
+    res.status(200).json({ message: "Repost deleted successfully" });
   } else {
-    res.status(404).json({ message: "Like not found" });
+    res.status(404).json({ message: "repost not found" });
   }
 });
 
 module.exports = {
-  likeSphinx,
-  dislikeSphinx,
+  repostSphinx,
+  undoRepostSphinx
 };
