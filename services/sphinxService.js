@@ -24,12 +24,24 @@ const getSphinxes = async (skip, limitNumber, userId) => {
       },
     },
     {
+      $lookup: {
+        from: "users",
+        localField: "userId",
+        foreignField: "_id",
+        as: "userDetails",
+      },
+    },
+    {
       $addFields: {
         likes: { $size: "$likes" },
         reposts: { $size: "$reposts" },
         isLikedByUser: isUserInteraction("likes", "userId", userId),
         isRepostedByUser: isUserInteraction("reposts", "userId", userId),
+        userName: { $arrayElemAt: ["$userDetails.userName", 0] },
       },
+    },
+    {
+      $sort: { createdAt: -1 }, // Sort by createdAt field in descending order
     },
     {
       $project: {
@@ -37,8 +49,10 @@ const getSphinxes = async (skip, limitNumber, userId) => {
         content: 1,
         likes: 1,
         reposts: 1,
+        createdAt: 1,
         isLikedByUser: 1,
         isRepostedByUser: 1,
+        userName: 1,
       },
     },
     {
