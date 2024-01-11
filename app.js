@@ -8,7 +8,7 @@ const notFound = require("./utils/not-found");
 const errorHandler = require("./utils/error-handler");
 
 require("dotenv").config();
-
+app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: "*",
