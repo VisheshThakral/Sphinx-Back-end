@@ -1,5 +1,6 @@
 const User = require("../models/User");
 const asyncWrapper = require("../utils/async");
+const { getImageURL } = require('./cloudStorage')
 const { createAccessToken } = require("../helpers/jwt_helper");
 
 const registerUser = asyncWrapper(async (req, res) => {
@@ -10,7 +11,7 @@ const registerUser = asyncWrapper(async (req, res) => {
   }
   const userToBeStored = new User(value);
   await userToBeStored.save();
-  res.send("User registered Successfully");
+  res.json({ msg: "User registered Successfully" });
 });
 
 const loginUser = async (req, res) => {
@@ -27,6 +28,8 @@ const loginUser = async (req, res) => {
   }
   const accessToken = await createAccessToken(user._id.toString());
   const { _id, __v, password: Password, ...userData } = user.toObject();
+
+  userData.userImage = await getImageURL(userData.userImage)
 
   res.header("Authorization", "Bearer " + accessToken).json({
     msg: "Login Successfully",
