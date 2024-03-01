@@ -7,7 +7,7 @@ const {
   getSphinxList,
 } = require("../controllers/Timelines/timelineController");
 
-router.get("/list", authenticateToken, getSphinxList);
+router.get("/list", getSphinxList);
 router.route("/create").post(authenticateToken, createSphinx);
 
 module.exports = router;
