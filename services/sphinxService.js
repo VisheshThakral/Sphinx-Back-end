@@ -1,12 +1,13 @@
-const Sphinx = require("../models/Sphinx");
 const mongoose = require("mongoose");
+const Sphinx = require("../models/Sphinx");
+const { getImageURL } = require("./cloudStorage");
 
 const isUserInteraction = (array, field, value) => ({
-  $in: [new mongoose.Types.ObjectId(value), "$" + array + "." + field],
+  $in: [new mongoose.Types.ObjectId(value), `$${array}.${field}`],
 });
 
 const getSphinxes = async (skip, limitNumber, userId) => {
-  return await Sphinx.aggregate([
+  const results = await Sphinx.aggregate([
     {
       $lookup: {
         from: "likes",
@@ -33,11 +34,13 @@ const getSphinxes = async (skip, limitNumber, userId) => {
     },
     {
       $addFields: {
-        likes: { $size: "$likes" },
-        reposts: { $size: "$reposts" },
+        likesCount: { $size: "$likes" },
+        repostsCount: { $size: "$reposts" },
         isLikedByUser: isUserInteraction("likes", "userId", userId),
         isRepostedByUser: isUserInteraction("reposts", "userId", userId),
         userName: { $arrayElemAt: ["$userDetails.userName", 0] },
+        fullName: { $arrayElemAt: ["$userDetails.fullName", 0] },
+        userImage: { $arrayElemAt: ["$userDetails.userImage", 0] },
       },
     },
     {
@@ -47,16 +50,18 @@ const getSphinxes = async (skip, limitNumber, userId) => {
       $project: {
         sphinxId: { $toString: "$_id" },
         content: 1,
-        likes: 1,
-        reposts: 1,
-        createdAt: 1,
+        likesCount: 1,
+        repostsCount: 1,
         isLikedByUser: 1,
         isRepostedByUser: 1,
         userName: 1,
+        fullName: 1,
+        userImage: 1, // Include userImage in the projection
+        createdAt: 1,
       },
     },
     {
-      $unset: "_id",
+      $unset: "_id", // Optionally remove the _id field if not needed
     },
     {
       $skip: skip,
@@ -65,6 +70,16 @@ const getSphinxes = async (skip, limitNumber, userId) => {
       $limit: limitNumber,
     },
   ]);
+
+  // Use Promise.all to wait for all getImageURL promises to resolve
+  const sphinxesWithImageUrls = await Promise.all(
+    results.map(async (sphinx) => ({
+      ...sphinx,
+      userImage: await getImageURL(sphinx.userImage), // Apply getImageURL function
+    }))
+  );
+
+  return sphinxesWithImageUrls;
 };
 
 const getTotalSphinxCount = async () => {
