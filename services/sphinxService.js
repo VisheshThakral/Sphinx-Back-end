@@ -34,8 +34,8 @@ const getSphinxes = async (skip, limitNumber, userId) => {
     },
     {
       $addFields: {
-        likesCount: { $size: "$likes" },
-        repostsCount: { $size: "$reposts" },
+        likes: { $size: "$likes" },
+        reposts: { $size: "$reposts" },
         isLikedByUser: isUserInteraction("likes", "userId", userId),
         isRepostedByUser: isUserInteraction("reposts", "userId", userId),
         userName: { $arrayElemAt: ["$userDetails.userName", 0] },
@@ -50,8 +50,8 @@ const getSphinxes = async (skip, limitNumber, userId) => {
       $project: {
         sphinxId: { $toString: "$_id" },
         content: 1,
-        likesCount: 1,
-        repostsCount: 1,
+        likes: 1,
+        reposts: 1,
         isLikedByUser: 1,
         isRepostedByUser: 1,
         userName: 1,
@@ -82,6 +82,86 @@ const getSphinxes = async (skip, limitNumber, userId) => {
   return sphinxesWithImageUrls;
 };
 
+const getSingleSphinxDetails = async (sphinxId) => {
+  const sphinxData = await Sphinx.aggregate([
+    { $match: { _id: sphinxId } },
+    {
+      $lookup: {
+        from: "users", // Assuming 'users' is the name of the collection for User model
+        localField: "userId",
+        foreignField: "_id",
+        as: "userData",
+      },
+    },
+    {
+      $lookup: {
+        from: "likes",
+        let: { sphinxId: "$_id" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$sphinxId", "$$sphinxId"] } } },
+          {
+            $lookup: {
+              from: "users",
+              localField: "userId",
+              foreignField: "_id",
+              as: "user",
+            },
+          },
+          { $unwind: "$user" },
+        ],
+        as: "likes",
+      },
+    },
+    {
+      $lookup: {
+        from: "reposts",
+        let: { sphinxId: "$_id" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$sphinxId", "$$sphinxId"] } } },
+          {
+            $lookup: {
+              from: "users",
+              localField: "userId",
+              foreignField: "_id",
+              as: "user",
+            },
+          },
+          { $unwind: "$user" },
+        ],
+        as: "reposts",
+      },
+    },
+    {
+      $lookup: {
+        from: "quotes",
+        let: { sphinxId: "$_id" },
+        pipeline: [
+          { $match: { $expr: { $eq: ["$sphinxId", "$$sphinxId"] } } },
+          {
+            $lookup: {
+              from: "users",
+              localField: "userId",
+              foreignField: "_id",
+              as: "user",
+            },
+          },
+          { $unwind: "$user" },
+        ],
+        as: "quotes",
+      },
+    },
+    {
+      $unwind: {
+        path: "$userData",
+        preserveNullAndEmptyArrays: true, // Handle cases where user data might be missing
+      },
+    },
+  ]);
+
+  return sphinxData;
+};
+
+
 const getTotalSphinxCount = async () => {
   return await Sphinx.countDocuments();
 };
@@ -89,4 +169,5 @@ const getTotalSphinxCount = async () => {
 module.exports = {
   getSphinxes,
   getTotalSphinxCount,
+  getSingleSphinxDetails,
 };
